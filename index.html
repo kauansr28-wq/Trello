@@ -2,13 +2,10 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Power-Up Consolidado</title>
-    <!-- Carrega a API do Trello -->
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f5f7; }
-        .hidden { display: none; }
-        .visible { display: flex; align-items: center; justify-content: space-between; background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
+        body { font-family: sans-serif; padding: 20px; display: none; color: #172b4d; background-color: #fff; }
+        .visible { display: flex; align-items: center; justify-content: space-between; }
         .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
@@ -18,9 +15,7 @@
     </style>
 </head>
 <body>
-
-    <!-- Interface visível apenas se for popup de configurações -->
-    <div id="settings-ui" class="hidden">
+    <div id="settings-ui" class="visible">
         <span>Mostrar descrições:</span>
         <label class="switch">
             <input type="checkbox" id="toggleSwitch">
@@ -31,37 +26,38 @@
     <script>
         var t = window.TrelloPowerUp.iframe();
 
-        // 1. Configurações do Power-Up
         window.TrelloPowerUp.initialize({
             'board-buttons': function(t) {
                 return [{
                     text: 'Configurações',
                     callback: function(t) {
-                        return t.popup({
-                            title: 'Configurações',
-                            url: './index.html?settings=true',
-                            height: 100
-                        });
+                        return t.popup({ title: 'Configurações', url: './index.html?settings=true', height: 80 });
                     }
                 }];
             },
             'card-badges': function(t) {
+                console.log("Debug: Tentando ler configuração...");
                 return t.get('board', 'shared', 'showDescriptions', false)
-                    .then(function(showDescriptions) {
-                        if (!showDescriptions) return [];
+                    .then(function(show) {
+                        console.log("Debug: Valor encontrado: " + show);
+                        if (!show) return [];
+                        
                         return t.card('desc').then(function(card) {
-                            if (!card.desc || card.desc.trim() === '') return [];
-                            // Corta o texto para o badge
-                            let preview = card.desc.substring(0, 30) + '...';
+                            if (!card.desc || card.desc.trim() === '') {
+                                console.log("Debug: Descrição vazia.");
+                                return [];
+                            }
+                            let text = card.desc.replace(/[`*#_~>]/g, "").replace(/\n/g, " ").trim();
+                            let preview = text.length > 35 ? text.substring(0, 32) + '...' : text;
+                            console.log("Debug: Badge gerado: " + preview);
                             return [{ text: preview, color: 'blue' }];
                         });
                     });
             }
         });
 
-        // 2. Lógica para exibir a interface apenas no popup
         if (window.location.search.includes('settings=true')) {
-            document.getElementById('settings-ui').classList.remove('hidden');
+            document.body.style.display = 'block';
             
             t.get('board', 'shared', 'showDescriptions', false).then(function(val) {
                 document.getElementById('toggleSwitch').checked = val;
@@ -69,6 +65,8 @@
 
             document.getElementById('toggleSwitch').addEventListener('change', function(e) {
                 t.set('board', 'shared', 'showDescriptions', e.target.checked).then(function() {
+                    console.log("Debug: Configuração salva como: " + e.target.checked);
+                    // Avisa o Trello para renderizar novamente
                     t.closePopup();
                 });
             });
