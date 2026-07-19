@@ -176,7 +176,12 @@
                             return t.card('desc')
                                 .then(function(card) {
                                     if (card && card.desc && card.desc.trim() !== '') {
-                                        var limit = 35;
+                                        // ==========================================
+                                        // AJUSTE DE CARACTERES:
+                                        // Altere o número abaixo para o limite que desejar!
+                                        // ==========================================
+                                        var limit = 80; 
+                                        
                                         var cleanDesc = card.desc.replace(/[\n\r]+/g, ' ').trim();
                                         var preview = cleanDesc.length > limit 
                                             ? cleanDesc.substring(0, limit) + '...' 
