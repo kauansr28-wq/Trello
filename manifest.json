@@ -1,7 +1,7 @@
 {
 "name": "Description Pro Sync",
-"version": "2.0.0",
-"description": "Sincroniza descrição com Custom Fields.",
+"version": "3.0.0",
+"description": "Sincroniza descrição com Custom Fields automaticamente.",
 "author": "Kauan",
 "capabilities": [
 "board-buttons",
