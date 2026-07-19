@@ -2,64 +2,41 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Sync Pro</title>
+    <title>Sincronizador Pro</title>
+    <!-- Carrega a biblioteca oficial do Trello -->
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
 </head>
 <body>
     <script>
         var t = window.TrelloPowerUp.iframe();
 
-        // Função utilitária para sincronizar um cartão individualmente
-        function syncCard(t, cardId, desc, fieldId) {
-            return t.setCustomField(cardId, fieldId, 'text', desc);
-        }
-
         window.TrelloPowerUp.initialize({
-            // 1. Botão no menu superior do quadro (Sincronizar Tudo)
+            // Este é o botão no topo do quadro
             'board-buttons': function(t, options) {
                 return [{
-                    text: 'Sync Total',
+                    text: 'Sync Total (Descrições)',
                     icon: 'https://cdn.hyperdev.com/us-east-1%3A3d31b21c-01a0-4fc2-84aa-17a4e1268538%2Ficon-grey.svg',
                     callback: function(t) {
+                        // 1. Busca todos os cartões e campos do quadro
                         return t.board('id', 'customFields').then(function(board) {
                             var field = board.customFields.find(f => f.name === 'Descrição Pro');
+                            
                             if (!field) {
-                                return t.alert({ message: 'Erro: Campo "Descrição Pro" não encontrado no quadro! Crie um campo personalizado com esse nome exato.' });
+                                // Se o campo não existir, avisa o usuário
+                                return t.alert({ message: 'Erro: Campo "Descrição Pro" não encontrado! Crie-o nas configurações do quadro.' });
                             }
                             
-                            // Busca todos os cartões do quadro
+                            // 2. Pega todos os cartões com suas descrições
                             return t.cards('id', 'desc').then(function(cards) {
                                 var promises = cards.map(function(card) {
-                                    return syncCard(t, card.id, card.desc, field.id);
+                                    // 3. Copia a descrição para o campo personalizado
+                                    return t.setCustomField(card.id, field.id, 'text', card.desc);
                                 });
                                 
+                                // 4. Aguarda todos terminarem e avisa
                                 return Promise.all(promises).then(function() {
-                                    return t.alert({ message: 'Sucesso! Todos os ' + cards.length + ' cartões foram sincronizados.' });
-                                }).catch(function(err) {
-                                    return t.alert({ message: 'Erro na sincronização: ' + err.message });
+                                    return t.alert({ message: 'Sucesso! Sincronizado ' + cards.length + ' cartões.' });
                                 });
-                            });
-                        });
-                    }
-                }];
-            },
-
-            // 2. Botão individual dentro do cartão
-            'card-buttons': function(t, options) {
-                return [{
-                    text: 'Sync Descrição',
-                    icon: 'https://cdn.hyperdev.com/us-east-1%3A3d31b21c-01a0-4fc2-84aa-17a4e1268538%2Ficon-grey.svg',
-                    callback: function(t) {
-                        return t.card('desc', 'id').then(function(card) {
-                            return t.board('customFields').then(function(board) {
-                                var field = board.customFields.find(f => f.name === 'Descrição Pro');
-                                if (!field) {
-                                    return t.alert({ message: 'Campo "Descrição Pro" não encontrado! Crie um campo personalizado com esse nome.' });
-                                }
-                                return syncCard(t, card.id, card.desc, field.id)
-                                    .then(function() {
-                                        return t.alert({ message: 'Sincronizado!' });
-                                    });
                             });
                         });
                     }
