@@ -1,9 +1,11 @@
 {
-"name": "Description Toggle",
-"version": "1.0.0",
-"description": "Mostra e oculta descrições dos cartões.",
+"name": "Description Pro Sync",
+"version": "2.0.0",
+"description": "Sincroniza descrição com Custom Fields.",
 "author": "Kauan",
-"homepage": "https://kauansr28-wq.github.io/Trello/",
 "capabilities": [
 "board-buttons",
-"card-badges"
+"card-buttons",
+"custom-fields"
+]
+}
