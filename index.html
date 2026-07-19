@@ -3,44 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <title>Sincronizador Pro</title>
-    <!-- Carrega a biblioteca oficial do Trello -->
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
+    <style>
+        body { margin: 0; padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #fafbfc; }
+        .toggle-container { display: flex; align-items: center; justify-content: space-between; background-color: #ffffff; padding: 12px; border-radius: 8px; border: 1px solid #dfe1e6; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: #0079bf; }
+        input:checked + .slider:before { transform: translateX(20px); }
+    </style>
 </head>
 <body>
+    <div class="toggle-container">
+        <span>Mostrar prévia:</span>
+        <label class="switch">
+            <input type="checkbox" id="toggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+
     <script>
         var t = window.TrelloPowerUp.iframe();
+        var checkbox = document.getElementById('toggle');
+
+        // Carrega o estado atual
+        t.render(function() {
+            return t.get('board', 'shared', 'showDescriptions', false).then(function(val) {
+                checkbox.checked = val;
+            });
+        });
+
+        // Salva quando mudar
+        checkbox.addEventListener('change', function() {
+            t.set('board', 'shared', 'showDescriptions', checkbox.checked);
+        });
 
         window.TrelloPowerUp.initialize({
-            // Este é o botão no topo do quadro
-            'board-buttons': function(t, options) {
-                return [{
-                    text: 'Sync Total (Descrições)',
-                    icon: 'https://cdn.hyperdev.com/us-east-1%3A3d31b21c-01a0-4fc2-84aa-17a4e1268538%2Ficon-grey.svg',
-                    callback: function(t) {
-                        // 1. Busca todos os cartões e campos do quadro
-                        return t.board('id', 'customFields').then(function(board) {
-                            var field = board.customFields.find(f => f.name === 'Descrição Pro');
-                            
-                            if (!field) {
-                                // Se o campo não existir, avisa o usuário
-                                return t.alert({ message: 'Erro: Campo "Descrição Pro" não encontrado! Crie-o nas configurações do quadro.' });
-                            }
-                            
-                            // 2. Pega todos os cartões com suas descrições
-                            return t.cards('id', 'desc').then(function(cards) {
-                                var promises = cards.map(function(card) {
-                                    // 3. Copia a descrição para o campo personalizado
-                                    return t.setCustomField(card.id, field.id, 'text', card.desc);
-                                });
-                                
-                                // 4. Aguarda todos terminarem e avisa
-                                return Promise.all(promises).then(function() {
-                                    return t.alert({ message: 'Sucesso! Sincronizado ' + cards.length + ' cartões.' });
-                                });
-                            });
-                        });
-                    }
-                }];
+            'board-buttons': function(t) {
+                return [{ icon: 'https://cdn.hyperdev.com/us-east-1%3A3d31b21c-01a0-4fc2-84aa-17a4e1268538%2Ficon-grey.svg', text: 'Visualizar', callback: function(t) { return t.popup({ title: 'Configurações', url: './index.html', height: 100 }); } }];
+            },
+            'card-badges': function(t) {
+                return t.get('board', 'shared', 'showDescriptions', false).then(function(show) {
+                    if (!show) return [];
+                    return t.card('desc').then(function(card) {
+                        if (!card.desc) return [];
+                        return [{ text: card.desc.substring(0, 30) + '...', color: 'blue' }];
+                    });
+                });
             }
         });
     </script>
