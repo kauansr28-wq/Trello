@@ -4,12 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Description Toggle</title>
+    <!-- Carrega a biblioteca oficial de Power-Ups do Trello via CDN -->
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
-    <script src="client.js" defer></script>
-    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* Estilos padrão do popup (só serão aplicados se a interface do popup for desenhada) */
+        body.popup-theme {
+            margin: 0;
+            padding: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #172b4d;
+            background-color: #fafbfc;
+            overflow: hidden;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #ffffff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #dfe1e6;
+        }
+
+        .toggle-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #172b4d;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #091e4224;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .slider {
+            background-color: #0079bf; /* Azul clássico do Trello */
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+    </style>
 </head>
 <body>
-    <div id="popup-content">
+
+    <!-- Container do Popup (inicialmente escondido, só aparece na página do popup) -->
+    <div id="popup-content" style="display: none;">
         <div class="toggle-container">
             <span class="toggle-label">Mostrar prévia nos cartões</span>
             <label class="switch">
@@ -20,35 +96,104 @@
     </div>
 
     <script>
-        // Instancia a API do iframe dentro do popup interativo
-        var t = window.TrelloPowerUp.iframe();
+        // Definição dos ícones padrão para exibição (usando SVGs neutros do CDN público do Trello)
+        var ICON_WHITE = 'https://cdn.hyperdev.com/us-east-1%3A3d31b21c-01a0-4fc2-84aa-17a4e1268538%2Ficon-white.svg';
+        var ICON_GREY = 'https://cdn.hyperdev.com/us-east-1%3A3d31b21c-01a0-4fc2-84aa-17a4e1268538%2Ficon-grey.svg';
 
-        // Executa assim que o iframe estiver pronto e renderizado pelo Trello
-        t.render(function() {
-            // Busca a preferência salva no nível do quadro ('board')
-            return t.get('board', 'shared', 'showDescriptions', false)
-                .then(function(showDescriptions) {
-                    var checkbox = document.getElementById('toggle-descriptions');
-                    checkbox.checked = showDescriptions;
+        // Detecta se estamos abrindo o popup ou se o Trello está carregando o conector em background
+        var urlParams = new URLSearchParams(window.location.search);
+        var isPopup = urlParams.get('page') === 'popup';
 
-                    // Adiciona o ouvinte para salvar a alteração quando o switch for alternado
-                    checkbox.addEventListener('change', function() {
-                        var isChecked = checkbox.checked;
-                        t.set('board', 'shared', 'showDescriptions', isChecked)
-                            .then(function() {
-                                // Solicita que o Trello redimensione o iframe se necessário
-                                return t.sizeTo('#popup-content');
-                            });
+        if (isPopup) {
+            // --- FLUXO DO POPUP DE CONFIGURAÇÃO ---
+            document.body.classList.add('popup-theme');
+            var popupContent = document.getElementById('popup-content');
+            popupContent.style.display = 'block';
+
+            // Instancia a API do iframe dentro do popup
+            var t = window.TrelloPowerUp.iframe();
+
+            // Executa assim que o iframe estiver pronto e renderizado pelo Trello
+            t.render(function() {
+                // Busca a preferência salva no nível do quadro ('board')
+                return t.get('board', 'shared', 'showDescriptions', false)
+                    .then(function(showDescriptions) {
+                        var checkbox = document.getElementById('toggle-descriptions');
+                        checkbox.checked = showDescriptions;
+
+                        // Salva a alteração quando o switch for alternado
+                        checkbox.addEventListener('change', function() {
+                            var isChecked = checkbox.checked;
+                            t.set('board', 'shared', 'showDescriptions', isChecked)
+                                .then(function() {
+                                    // Solicita que o Trello redimensione o popup
+                                    return t.sizeTo('#popup-content');
+                                });
+                        });
+                    })
+                    .then(function() {
+                        // Ajusta a altura da janela de forma precisa
+                        return t.sizeTo('#popup-content');
+                    })
+                    .catch(function(err) {
+                        console.error('Erro ao carregar configurações:', err);
                     });
-                })
-                .then(function() {
-                    // Ajusta a altura da janela do popup de forma dinâmica e precisa
-                    return t.sizeTo('#popup-content');
-                })
-                .catch(function(err) {
-                    console.error('Erro ao carregar configurações:', err);
-                });
-        });
+            });
+        } else {
+            // --- FLUXO DO CONECTOR PRINCIPAL (INITIALIZE) ---
+            window.TrelloPowerUp.initialize({
+                // 1. Registra o botão no menu superior do quadro (Board Button)
+                'board-buttons': function(t, options) {
+                    return [
+                        {
+                            icon: {
+                                dark: ICON_WHITE,
+                                light: ICON_GREY
+                            },
+                            text: 'Visualizar Descrições',
+                            callback: function(t) {
+                                // Abre o popup apontando para este próprio arquivo, mas passando ?page=popup
+                                return t.popup({
+                                    title: 'Controle de Descrições',
+                                    url: './index.html?page=popup',
+                                    height: 140
+                                });
+                            }
+                        }
+                    ];
+                },
+
+                // 2. Registra o badge dinâmico nos cartões
+                'card-badges': function(t, options) {
+                    // Recuperamos a preferência salva
+                    return t.get('board', 'shared', 'showDescriptions', false)
+                        .then(function(showDescriptions) {
+                            if (!showDescriptions) {
+                                return [];
+                            }
+
+                            // Buscamos a descrição do cartão
+                            return t.card('desc')
+                                .then(function(card) {
+                                    if (card && card.desc && card.desc.trim() !== '') {
+                                        var limit = 35;
+                                        var cleanDesc = card.desc.replace(/[\n\r]+/g, ' ').trim();
+                                        var preview = cleanDesc.length > limit 
+                                            ? cleanDesc.substring(0, limit) + '...' 
+                                            : cleanDesc;
+
+                                        return [{
+                                            text: preview,
+                                            color: 'blue',
+                                            icon: ICON_GREY
+                                        }];
+                                    }
+                                    return [];
+                                });
+                        });
+                }
+            });
+        }
     </script>
 </body>
 </html>
