@@ -1,10 +1,11 @@
 {
-"name": "Sync Pro Descrição",
+"name": "Description Toggle",
 "version": "1.0.0",
+"description": "Mostra e oculta descrições dos cartões.",
 "author": "Kauan",
+"homepage": "https://kauansr28-wq.github.io/Trello/",
 "capabilities": [
 "board-buttons",
 "card-badges"
-],
-"iframeConnector": "https://kauansr28-wq.github.io/Trello/index.html"
+]
 }
