@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Power-Up Consolidado</title>
+    <!-- Carrega a API do Trello -->
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f4f5f7; }
@@ -25,11 +26,6 @@
             <input type="checkbox" id="toggleSwitch">
             <span class="slider"></span>
         </label>
-    </div>
-
-    <!-- Mensagem de teste para verificar se o link funciona -->
-    <div id="test-message" style="color: #666; font-size: 12px;">
-        Se você está vendo isso, o arquivo está carregando!
     </div>
 
     <script>
@@ -55,6 +51,7 @@
                         if (!showDescriptions) return [];
                         return t.card('desc').then(function(card) {
                             if (!card.desc || card.desc.trim() === '') return [];
+                            // Corta o texto para o badge
                             let preview = card.desc.substring(0, 30) + '...';
                             return [{ text: preview, color: 'blue' }];
                         });
@@ -65,7 +62,6 @@
         // 2. Lógica para exibir a interface apenas no popup
         if (window.location.search.includes('settings=true')) {
             document.getElementById('settings-ui').classList.remove('hidden');
-            document.getElementById('test-message').classList.add('hidden');
             
             t.get('board', 'shared', 'showDescriptions', false).then(function(val) {
                 document.getElementById('toggleSwitch').checked = val;
