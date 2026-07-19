@@ -1,11 +1,10 @@
 {
-"name": "Description Pro Sync",
-"version": "3.0.0",
-"description": "Sincroniza descrição com Custom Fields automaticamente.",
+"name": "Sync Pro Descrição",
+"version": "1.0.0",
 "author": "Kauan",
 "capabilities": [
 "board-buttons",
-"card-buttons",
-"custom-fields"
-]
+"card-badges"
+],
+"iframeConnector": "https://kauansr28-wq.github.io/Trello/index.html"
 }
