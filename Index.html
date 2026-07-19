@@ -4,14 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Description Toggle</title>
-
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
     <script src="client.js" defer></script>
-
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+    <div id="popup-content">
+        <div class="toggle-container">
+            <span class="toggle-label">Mostrar prévia nos cartões</span>
+            <label class="switch">
+                <input type="checkbox" id="toggle-descriptions">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
 
+    <script>
+        // Instancia a API do iframe dentro do popup interativo
+        var t = window.TrelloPowerUp.iframe();
+
+        // Executa assim que o iframe estiver pronto e renderizado pelo Trello
+        t.render(function() {
+            // Busca a preferência salva no nível do quadro ('board')
+            return t.get('board', 'shared', 'showDescriptions', false)
+                .then(function(showDescriptions) {
+                    var checkbox = document.getElementById('toggle-descriptions');
+                    checkbox.checked = showDescriptions;
+
+                    // Adiciona o ouvinte para salvar a alteração quando o switch for alternado
+                    checkbox.addEventListener('change', function() {
+                        var isChecked = checkbox.checked;
+                        t.set('board', 'shared', 'showDescriptions', isChecked)
+                            .then(function() {
+                                // Solicita que o Trello redimensione o iframe se necessário
+                                return t.sizeTo('#popup-content');
+                            });
+                    });
+                })
+                .then(function() {
+                    // Ajusta a altura da janela do popup de forma dinâmica e precisa
+                    return t.sizeTo('#popup-content');
+                })
+                .catch(function(err) {
+                    console.error('Erro ao carregar configurações:', err);
+                });
+        });
+    </script>
 </body>
 </html>
