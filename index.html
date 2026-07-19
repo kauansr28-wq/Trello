@@ -1,60 +1,41 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 10px; display: flex; align-items: center; justify-content: space-between; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+        input:checked + .slider { background-color: #0079bf; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; border-radius: 50%; transition: .4s; }
+        input:checked + .slider:before { transform: translateX(20px); }
+    </style>
 </head>
 <body>
+    <span>Mostrar descrições:</span>
+    <label class="switch">
+        <input type="checkbox" id="toggleSwitch">
+        <span class="slider"></span>
+    </label>
+
     <script>
         var t = window.TrelloPowerUp.iframe();
 
-        // Limpa o texto de caracteres de formatação (Markdown, etc)
-        function limparTexto(texto) {
-            return texto.replace(/[`*#_~>]/g, "").replace(/\n/g, " ");
-        }
+        // Carrega o estado atual ao abrir
+        t.get('board', 'shared', 'showDescriptions', false).then(function(val) {
+            document.getElementById('toggleSwitch').checked = val;
+        });
 
-        // Fatiador de texto (A lógica que você encontrou no código deles)
-        function fatiarTexto(texto, limite, maxLinhas) {
-            let palavras = texto.split(" ");
-            let linhas = [];
-            let linhaAtual = "";
-
-            for (let p of palavras) {
-                if ((linhaAtual + p).length <= limite) {
-                    linhaAtual += p + " ";
-                } else {
-                    linhas.push(linhaAtual.trim());
-                    linhaAtual = p + " ";
-                    if (linhas.length >= maxLinhas) break;
-                }
-            }
-            if (linhas.length < maxLinhas) linhas.push(linhaAtual.trim());
-            return linhas.filter(Boolean);
-        }
-
-        window.TrelloPowerUp.initialize({
-            'board-buttons': function(t) {
-                return [{
-                    text: 'Visualizador Ativo',
-                    callback: function(t) { return t.popup({ title: 'Configurações', url: './index.html?settings=true' }); }
-                }];
-            },
-            'card-badges': function(t) {
-                return t.card('desc').then(function(card) {
-                    if (!card.desc) return [];
-                    
-                    // Lógica de "fatiamento" profissional
-                    let textoLimpo = limparTexto(card.desc);
-                    let linhas = fatiarTexto(textoLimpo, 35, 3); // 35 caracteres, 3 linhas
-                    
-                    // Retorna o array de badges
-                    return linhas.map(function(texto) {
-                        return {
-                            text: texto,
-                            color: 'blue'
-                        };
-                    });
+        // Salva ao alterar
+        document.getElementById('toggleSwitch').addEventListener('change', function(e) {
+            t.set('board', 'shared', 'showDescriptions', e.target.checked).then(function() {
+                t.closePopup(); // Fecha o popup automaticamente após mudar
+                t.board('id').then(function(board) {
+                     // Recarrega o quadro para aplicar as mudanças
+                     location.reload(); 
                 });
-            }
+            });
         });
     </script>
 </body>
