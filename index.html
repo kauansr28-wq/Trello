@@ -24,7 +24,7 @@
                         return t.board('id', 'customFields').then(function(board) {
                             var field = board.customFields.find(f => f.name === 'Descrição Pro');
                             if (!field) {
-                                return t.alert({ message: 'Erro: Campo "Descrição Pro" não encontrado no quadro!' });
+                                return t.alert({ message: 'Erro: Campo "Descrição Pro" não encontrado no quadro! Crie um campo personalizado com esse nome exato.' });
                             }
                             
                             // Busca todos os cartões do quadro
@@ -35,6 +35,8 @@
                                 
                                 return Promise.all(promises).then(function() {
                                     return t.alert({ message: 'Sucesso! Todos os ' + cards.length + ' cartões foram sincronizados.' });
+                                }).catch(function(err) {
+                                    return t.alert({ message: 'Erro na sincronização: ' + err.message });
                                 });
                             });
                         });
@@ -42,7 +44,7 @@
                 }];
             },
 
-            // 2. Botão individual dentro do cartão (para sincronizar um por um)
+            // 2. Botão individual dentro do cartão
             'card-buttons': function(t, options) {
                 return [{
                     text: 'Sync Descrição',
@@ -52,7 +54,7 @@
                             return t.board('customFields').then(function(board) {
                                 var field = board.customFields.find(f => f.name === 'Descrição Pro');
                                 if (!field) {
-                                    return t.alert({ message: 'Campo "Descrição Pro" não encontrado!' });
+                                    return t.alert({ message: 'Campo "Descrição Pro" não encontrado! Crie um campo personalizado com esse nome.' });
                                 }
                                 return syncCard(t, card.id, card.desc, field.id)
                                     .then(function() {
