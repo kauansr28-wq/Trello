@@ -1,11 +1,9 @@
 {
-"name": "Description Toggle",
+"name": "Visualizador de Descrições Pro",
 "version": "1.0.0",
-"description": "Mostra e oculta descrições dos cartões.",
-"author": "Kauan",
-"homepage": "https://kauansr28-wq.github.io/Trello/",
 "capabilities": [
-"board-buttons",
-"card-badges"
-]
+"card-badges",
+"board-buttons"
+],
+"author": "Kauan"
 }
