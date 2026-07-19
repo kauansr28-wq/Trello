@@ -1,27 +1,90 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
+    <style>
+        /* Oculta a tela por padrão, só mostra quando for o popup */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 16px; 
+            display: none; 
+            color: #172b4d; 
+            background-color: #fff;
+            margin: 0;
+        }
+        .visible { display: flex; align-items: center; justify-content: space-between; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #091e4224; transition: .3s; border-radius: 24px; }
+        input:checked + .slider { background-color: #0079bf; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .texto-bold { font-size: 14px; font-weight: 600; }
+    </style>
 </head>
 <body>
+    <!-- A interface que vai aparecer no Popup -->
+    <div id="settings-ui" class="visible">
+        <span class="texto-bold">Mostrar descrições:</span>
+        <label class="switch">
+            <input type="checkbox" id="toggleSwitch">
+            <span class="slider"></span>
+        </label>
+    </div>
+
     <script>
         var t = window.TrelloPowerUp.iframe();
 
+        // 1. O que o Power-Up faz no quadro
         window.TrelloPowerUp.initialize({
             'board-buttons': function(t) {
                 return [{
                     text: 'Configurações',
                     callback: function(t) {
-                        return t.popup({
-                            title: 'Configurações',
-                            url: './index.html?settings=true',
-                            height: 100
+                        return t.popup({ 
+                            title: 'Configurações', 
+                            url: './index.html?settings=true', 
+                            height: 80 
                         });
                     }
                 }];
+            },
+            'card-badges': function(t) {
+                return t.get('board', 'shared', 'showDescriptions', false)
+                    .then(function(show) {
+                        // Se o botão estiver desligado, não mostra nada
+                        if (!show) return [];
+                        
+                        // Se estiver ligado, puxa a descrição
+                        return t.card('desc').then(function(card) {
+                            if (!card.desc || card.desc.trim() === '') return [];
+                            
+                            // Limpa e corta o texto
+                            let text = card.desc.replace(/[`*#_~>]/g, "").replace(/\n/g, " ").trim();
+                            let preview = text.length > 35 ? text.substring(0, 32) + '...' : text;
+                            
+                            return [{ text: preview, color: 'blue' }];
+                        });
+                    });
             }
         });
+
+        // 2. O que o Power-Up faz quando o Popup é aberto
+        if (window.location.search.includes('settings=true')) {
+            // Torna o corpo da página visível
+            document.body.style.display = 'block';
+            
+            // Puxa do Trello se a chave estava ligada ou desligada
+            t.get('board', 'shared', 'showDescriptions', false).then(function(val) {
+                document.getElementById('toggleSwitch').checked = val;
+            });
+
+            // Quando você clica no botão, salva a nova preferência
+            document.getElementById('toggleSwitch').addEventListener('change', function(e) {
+                t.set('board', 'shared', 'showDescriptions', e.target.checked);
+            });
+        }
     </script>
 </body>
 </html>
